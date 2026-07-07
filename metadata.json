@@ -1,0 +1,6 @@
+{
+  "name": "WhatsGuard Monitor",
+  "description": "High-accuracy multi-platform chat monitoring (WhatsApp, Instagram, Snapchat) and media retrieval dashboard with OCR capabilities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
