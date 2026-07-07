@@ -39,3 +39,13 @@ data class DeviceStatus(
     val locationLongitude: Double = -122.4194,
     val stealthModeEnabled: Boolean = false
 )
+
+@Entity(tableName = "call_logs")
+data class CallLogItem(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val contactName: String,
+    val phoneNumber: String,
+    val callType: String, // "Incoming", "Outgoing", "Missed"
+    val durationSeconds: Int,
+    val timestamp: Long = System.currentTimeMillis()
+)

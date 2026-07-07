@@ -57,9 +57,25 @@ interface DeviceStatusDao {
     suspend fun insertOrUpdateDeviceStatus(deviceStatus: DeviceStatus)
 }
 
-@Database(entities = [ChatLog::class, MediaItem::class, DeviceStatus::class], version = 2, exportSchema = false)
+@Dao
+interface CallLogDao {
+    @Query("SELECT * FROM call_logs ORDER BY timestamp DESC")
+    fun getAllCallLogs(): Flow<List<CallLogItem>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCallLog(callLog: CallLogItem)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCallLogs(callLogs: List<CallLogItem>)
+
+    @Query("DELETE FROM call_logs")
+    suspend fun clearAllCallLogs()
+}
+
+@Database(entities = [ChatLog::class, MediaItem::class, DeviceStatus::class, CallLogItem::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun chatLogDao(): ChatLogDao
     abstract fun mediaItemDao(): MediaItemDao
     abstract fun deviceStatusDao(): DeviceStatusDao
+    abstract fun callLogDao(): CallLogDao
 }

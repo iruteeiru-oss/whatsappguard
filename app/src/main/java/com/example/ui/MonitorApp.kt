@@ -151,6 +151,12 @@ fun MonitorApp(viewModel: MonitorViewModel) {
                         icon = { Icon(Icons.Default.Chat, contentDescription = "Chats") }
                     )
                     NavigationBarItem(
+                        selected = selectedTab == "calls",
+                        onClick = { viewModel.setSelectedTab("calls") },
+                        label = { Text("Calls") },
+                        icon = { Icon(Icons.Default.Phone, contentDescription = "Calls") }
+                    )
+                    NavigationBarItem(
                         selected = selectedTab == "media",
                         onClick = { viewModel.setSelectedTab("media") },
                         label = { Text("Media Retriever") },
@@ -177,6 +183,7 @@ fun MonitorApp(viewModel: MonitorViewModel) {
                 when (selectedTab) {
                     "dashboard" -> ParentDashboardView(viewModel, deviceStatus)
                     "chats" -> ParentChatsView(viewModel, chatLogs)
+                    "calls" -> ParentCallsView(viewModel)
                     "media" -> ParentMediaView(viewModel, mediaItems)
                     "setup" -> SetupWizardView(viewModel)
                 }
@@ -371,12 +378,229 @@ fun ParentDashboardView(viewModel: MonitorViewModel, status: DeviceStatus?) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Live Location Tracking",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TealAccent
+                        )
+                        Box(
+                            modifier = Modifier
+                                .background(StatusOnline.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(StatusOnline, CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "GPS LIVE",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = StatusOnline
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Tracking child's physical coordinates in real-time under parent supervision.",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Tactical Radar / Map Canvas Grid
+                    val lat = status?.locationLatitude ?: 37.7749
+                    val lng = status?.locationLongitude ?: -122.4194
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF0B132B)) // High-tech deep space blue
+                            .border(1.dp, TealAccent.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val w = size.width
+                            val h = size.height
+                            val cx = w / 2
+                            val cy = h / 2
+                            
+                            // Draw Grid Lines
+                            val gridSpacing = 30.dp.toPx()
+                            for (x in 0..(w / gridSpacing).toInt()) {
+                                drawLine(
+                                    color = Color(0xFF1C2541).copy(alpha = 0.5f),
+                                    start = androidx.compose.ui.geometry.Offset(x * gridSpacing, 0f),
+                                    end = androidx.compose.ui.geometry.Offset(x * gridSpacing, h),
+                                    strokeWidth = 1f
+                                )
+                            }
+                            for (y in 0..(h / gridSpacing).toInt()) {
+                                drawLine(
+                                    color = Color(0xFF1C2541).copy(alpha = 0.5f),
+                                    start = androidx.compose.ui.geometry.Offset(0f, y * gridSpacing),
+                                    end = androidx.compose.ui.geometry.Offset(w, y * gridSpacing),
+                                    strokeWidth = 1f
+                                )
+                            }
+                            
+                            // Draw Concentric Radar Rings
+                            val maxRadius = Math.min(w, h) / 1.5f
+                            drawCircle(
+                                color = TealAccent.copy(alpha = 0.15f),
+                                radius = maxRadius / 3,
+                                center = androidx.compose.ui.geometry.Offset(cx, cy),
+                                style = Stroke(width = 1.dp.toPx())
+                            )
+                            drawCircle(
+                                color = TealAccent.copy(alpha = 0.1f),
+                                radius = maxRadius / 1.5f,
+                                center = androidx.compose.ui.geometry.Offset(cx, cy),
+                                style = Stroke(width = 1.dp.toPx())
+                            )
+                            drawCircle(
+                                color = TealAccent.copy(alpha = 0.05f),
+                                radius = maxRadius,
+                                center = androidx.compose.ui.geometry.Offset(cx, cy),
+                                style = Stroke(width = 1.dp.toPx())
+                            )
+                            
+                            // Draw Map Roads Simulation (decorative)
+                            drawLine(
+                                color = Color(0xFF3A506B).copy(alpha = 0.4f),
+                                start = androidx.compose.ui.geometry.Offset(0f, cy - 20.dp.toPx()),
+                                end = androidx.compose.ui.geometry.Offset(w, cy + 30.dp.toPx()),
+                                strokeWidth = 3.dp.toPx()
+                            )
+                            drawLine(
+                                color = Color(0xFF3A506B).copy(alpha = 0.4f),
+                                start = androidx.compose.ui.geometry.Offset(cx - 50.dp.toPx(), 0f),
+                                end = androidx.compose.ui.geometry.Offset(cx + 40.dp.toPx(), h),
+                                strokeWidth = 3.dp.toPx()
+                            )
+                            
+                            // Draw Central Glowing Marker
+                            drawCircle(
+                                color = StatusOnline.copy(alpha = 0.25f),
+                                radius = 24.dp.toPx(),
+                                center = androidx.compose.ui.geometry.Offset(cx, cy)
+                            )
+                            drawCircle(
+                                color = StatusOnline.copy(alpha = 0.6f),
+                                radius = 10.dp.toPx(),
+                                center = androidx.compose.ui.geometry.Offset(cx, cy)
+                            )
+                            drawCircle(
+                                color = Color.White,
+                                radius = 4.dp.toPx(),
+                                center = androidx.compose.ui.geometry.Offset(cx, cy)
+                            )
+                        }
+                        
+                        // Compass Card overlay
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .background(Color(0xFF0F172A).copy(alpha = 0.85f), RoundedCornerShape(8.dp))
+                                .border(0.5.dp, TealAccent.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "COMPASS N-NE",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TealAccent
+                            )
+                        }
+                        
+                        // Signal Strength / Accuracy overlay
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(8.dp)
+                                .background(Color(0xFF0F172A).copy(alpha = 0.85f), RoundedCornerShape(8.dp))
+                                .border(0.5.dp, TealAccent.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "GPS ACCURACY: ±4.8m",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = StatusOnline
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Coordinates Text Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                "CURRENT COORDINATES",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary
+                            )
+                            Text(
+                                String.format(Locale.US, "%.5f, %.5f", lat, lng),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+                        
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                "ACTIVE ZONE",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary
+                            )
+                            Text(
+                                "San Francisco, CA",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Safety-Consent System Security
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Privacy-First System Security",
+                            "Safety-Consent System Security",
                             fontSize = 14.sp,
                             color = TealAccent,
                             fontWeight = FontWeight.Bold
@@ -387,7 +611,7 @@ fun ParentDashboardView(viewModel: MonitorViewModel, status: DeviceStatus?) {
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                "COMPLIANCE VERIFIED",
+                                "PARENTAL CONSENT ACTIVE",
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TealAccent
@@ -396,7 +620,7 @@ fun ParentDashboardView(viewModel: MonitorViewModel, status: DeviceStatus?) {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "WhatsGuard is designed with zero-intrusion compliance. We deliberately avoid requesting dangerous, privacy-violating Android system permissions.",
+                        "WhatsGuard operates with explicit parental consent to protect children from danger, logging key security vectors under strict COPPA standards.",
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -406,30 +630,30 @@ fun ParentDashboardView(viewModel: MonitorViewModel, status: DeviceStatus?) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         PermissionAuditItem(
                             permissionName = "Live Location Tracking (GPS)",
-                            status = "NOT REQUESTED (Secure)",
-                            statusColor = Color(0xFF94A3B8),
-                            description = "GPS tracking is disabled. Protects device history and limits battery overhead.",
+                            status = "ACTIVE (Secure)",
+                            statusColor = StatusOnline,
+                            description = "GPS tracking is fully enabled. Keeps track of current locations and history safely.",
                             icon = Icons.Default.LocationOn
                         )
                         PermissionAuditItem(
                             permissionName = "SMS Interception (MMS/Text)",
-                            status = "NOT REQUESTED (Secure)",
-                            statusColor = Color(0xFF94A3B8),
-                            description = "Prevents eavesdropping on personal texts or secure 2-factor OTP credentials.",
+                            status = "ACTIVE (Secure)",
+                            statusColor = StatusOnline,
+                            description = "Monitors child text messages for distress signs, bullying, or security codes.",
                             icon = Icons.Default.Chat
                         )
                         PermissionAuditItem(
                             permissionName = "Phone Call Records & Logs",
-                            status = "NOT REQUESTED (Secure)",
-                            statusColor = Color(0xFF94A3B8),
-                            description = "We do not intercept live dialer activity, record voice calls, or access logs.",
+                            status = "ACTIVE (Secure)",
+                            statusColor = StatusOnline,
+                            description = "Logs dialer calls and incoming/outgoing numbers to detect stranger dangers.",
                             icon = Icons.Default.Phone
                         )
                         PermissionAuditItem(
                             permissionName = "Local Media Folder Crawler",
-                            status = "ACTIVE (Storage Bound Only)",
+                            status = "ACTIVE (Secure)",
                             statusColor = StatusOnline,
-                            description = "Crawls non-sensitive local cached folders to retrieve incoming/outgoing images & files.",
+                            description = "Crawls non-sensitive local cached folders to retrieve incoming/outgoing images.",
                             icon = Icons.Default.Folder
                         )
                     }
@@ -509,7 +733,8 @@ fun ParentChatsView(viewModel: MonitorViewModel, chatLogs: List<ChatLog>) {
     val appColors = mapOf(
         "WhatsApp" to Color(0xFF00BFA5),
         "Instagram" to Color(0xFFE1306C),
-        "Snapchat" to Color(0xFFFFE000)
+        "Snapchat" to Color(0xFFFFE000),
+        "SMS" to Color(0xFF60A5FA)
     )
 
     val filteredLogs = chatLogs.filter { log ->
@@ -578,7 +803,7 @@ fun ParentChatsView(viewModel: MonitorViewModel, chatLogs: List<ChatLog>) {
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf("All", "WhatsApp", "Instagram", "Snapchat").forEach { app ->
+            listOf("All", "WhatsApp", "Instagram", "Snapchat", "SMS").forEach { app ->
                 val isSelected = selectedAppFilter == app
                 val color = if (app == "All") TealAccent else appColors[app] ?: TealAccent
                 Box(
@@ -714,6 +939,230 @@ fun ParentChatsView(viewModel: MonitorViewModel, chatLogs: List<ChatLog>) {
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.End
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// PARENT: PHONE CALLS MONITORING VIEW
+// ==========================================
+@Composable
+fun ParentCallsView(viewModel: MonitorViewModel) {
+    val callLogs by viewModel.callLogs.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredCalls = callLogs.filter { call ->
+        searchQuery.isEmpty() ||
+        call.contactName.contains(searchQuery, ignoreCase = true) ||
+        call.phoneNumber.contains(searchQuery, ignoreCase = true)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Search & Refresh Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search phone call logs...", color = TextSecondary, fontSize = 14.sp) },
+                modifier = Modifier.weight(1f),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = DarkSurface,
+                    unfocusedContainerColor = DarkSurface,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary
+                ),
+                shape = RoundedCornerShape(12.dp),
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = TextSecondary)
+                        }
+                    } else {
+                        Icon(Icons.Default.Search, contentDescription = "Search", tint = TextSecondary)
+                    }
+                }
+            )
+            
+            IconButton(
+                onClick = { viewModel.resetAllData() },
+                modifier = Modifier
+                    .background(DarkSurface, RoundedCornerShape(12.dp))
+                    .size(56.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = "Reset Logs", tint = TealAccent)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Parental Compliance Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant.copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, TealAccent.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Consent active",
+                    tint = TealAccent,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "COPPA Consent Verification Active: Only logging direct call durations and dialer contacts.",
+                    fontSize = 11.sp,
+                    color = TextPrimary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            "Captured Live Call History",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (filteredCalls.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Phone,
+                        contentDescription = "No Calls",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(56.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "No phone call logs captured.",
+                        fontSize = 14.sp,
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(filteredCalls) { call ->
+                    val callColor = when (call.callType) {
+                        "Incoming" -> StatusOnline
+                        "Outgoing" -> Color(0xFF60A5FA)
+                        else -> StatusWarning
+                    }
+                    val callIcon = when (call.callType) {
+                        "Incoming" -> Icons.Default.CallReceived
+                        "Outgoing" -> Icons.Default.CallMade
+                        else -> Icons.Default.Phone
+                    }
+
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                width = 1.dp,
+                                color = callColor.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(callColor.copy(alpha = 0.15f), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = callIcon,
+                                        contentDescription = call.callType,
+                                        tint = callColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = call.contactName,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = TextPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = call.phoneNumber,
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+
+                            Column(horizontalAlignment = Alignment.End) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(callColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = call.callType,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = callColor
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = if (call.callType == "Missed") "No answer" else "${call.durationSeconds}s duration",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(call.timestamp)),
+                                    fontSize = 10.sp,
+                                    color = TextSecondary
+                                )
+                            }
                         }
                     }
                 }
@@ -1227,6 +1676,13 @@ fun ChildSimulationView(viewModel: MonitorViewModel, chatLogs: List<ChatLog>) {
     var ocrMockText1 by remember { mutableStateOf("Mom: Did you eat?") }
     var ocrMockText2 by remember { mutableStateOf("Me: Yes, had some pasta.") }
 
+    var smsContact by remember { mutableStateOf("Aunt Clara") }
+    var smsBody by remember { mutableStateOf("Let me know when you reach home!") }
+    var callContact by remember { mutableStateOf("Unknown Number") }
+    var callPhone by remember { mutableStateOf("+1 (555) 019-2831") }
+    var callType by remember { mutableStateOf("Incoming") }
+    var callDuration by remember { mutableStateOf("92") }
+
     val appColors = mapOf(
         "WhatsApp" to Color(0xFF00BFA5),
         "Instagram" to Color(0xFFE1306C),
@@ -1604,6 +2060,187 @@ fun ChildSimulationView(viewModel: MonitorViewModel, chatLogs: List<ChatLog>) {
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
+                    }
+                }
+            }
+        }
+
+        // 4. SIMULATE SYSTEM ACTIVITIES (SMS & CALLS)
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "4. Simulate System Activities (SMS & Calls)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TealAccent
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Inject real-time call records and SMS text messages directly into the database to verify active tracking capabilities.",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DarkSurfaceVariant))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // SMS Section
+                    Text(
+                        "Simulate SMS Text Message",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF60A5FA)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextField(
+                        value = smsContact,
+                        onValueChange = { smsContact = it },
+                        label = { Text("SMS Sender/Receiver Name", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF0F172A),
+                            unfocusedContainerColor = Color(0xFF0F172A)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextField(
+                        value = smsBody,
+                        onValueChange = { smsBody = it },
+                        label = { Text("SMS Body Text", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF0F172A),
+                            unfocusedContainerColor = Color(0xFF0F172A)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                viewModel.simulateChildMessageReceived(smsContact, smsBody, isOutgoing = false, appSource = "SMS")
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF60A5FA)),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Simulate Recv SMS", color = Color.Black, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = {
+                                viewModel.simulateChildMessageReceived(smsContact, smsBody, isOutgoing = true, appSource = "SMS")
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Simulate Send SMS", color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(DarkSurfaceVariant))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Calls Section
+                    Text(
+                        "Simulate Dialer Call Record",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = StatusOnline
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextField(
+                        value = callContact,
+                        onValueChange = { callContact = it },
+                        label = { Text("Contact Name", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF0F172A),
+                            unfocusedContainerColor = Color(0xFF0F172A)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextField(
+                        value = callPhone,
+                        onValueChange = { callPhone = it },
+                        label = { Text("Phone Number", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF0F172A),
+                            unfocusedContainerColor = Color(0xFF0F172A)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Call Type Selector Chips
+                    Text("Call Type:", fontSize = 11.sp, color = TextSecondary)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Incoming", "Outgoing", "Missed").forEach { type ->
+                            val isSelected = callType == type
+                            val chipColor = when (type) {
+                                "Incoming" -> StatusOnline
+                                "Outgoing" -> Color(0xFF60A5FA)
+                                else -> StatusWarning
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) chipColor else DarkSurfaceVariant)
+                                    .clickable { callType = type }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = type,
+                                    color = if (isSelected) Color.Black else TextPrimary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TextField(
+                        value = callDuration,
+                        onValueChange = { callDuration = it },
+                        label = { Text("Call Duration (seconds)", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF0F172A),
+                            unfocusedContainerColor = Color(0xFF0F172A)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.simulatePhoneCall(
+                                callContact,
+                                callPhone,
+                                callType,
+                                callDuration.toIntOrNull() ?: 0
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusOnline),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Simulate Call Event", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

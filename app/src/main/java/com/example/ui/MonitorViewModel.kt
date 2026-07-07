@@ -18,6 +18,7 @@ import com.example.data.AppDatabase
 import com.example.data.ChatLog
 import com.example.data.DeviceStatus
 import com.example.data.MediaItem
+import com.example.data.CallLogItem
 import com.example.data.MonitorRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +39,8 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
     private val repository = MonitorRepository(
         database.chatLogDao(),
         database.mediaItemDao(),
-        database.deviceStatusDao()
+        database.deviceStatusDao(),
+        database.callLogDao()
     )
 
     // Flow observations
@@ -50,6 +52,9 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
 
     val deviceStatus: StateFlow<DeviceStatus?> = repository.deviceStatusFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val callLogs: StateFlow<List<CallLogItem>> = repository.allCallLogs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // UI Navigation State
     private val _currentRole = MutableStateFlow("parent") // "parent" or "child"
@@ -98,6 +103,7 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             repository.prepopulateIfEmpty()
             prepopulateInitialData()
+            startLocationSimulator()
         }
 
         // Register battery status receiver
@@ -232,9 +238,55 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
                     isOutgoing = false,
                     detectionMethod = "ScreenReader",
                     appSource = "Snapchat"
+                ),
+                // SMS Logs
+                ChatLog(
+                    contactName = "Aunt Clara",
+                    messageText = "Hope you are doing well sweetie! Tell your mom I'll visit this weekend.",
+                    timestamp = now - 3600000 * 1, // 1 hour ago
+                    isOutgoing = false,
+                    detectionMethod = "SMS",
+                    appSource = "SMS"
+                ),
+                ChatLog(
+                    contactName = "Aunt Clara",
+                    messageText = "Sure Aunt Clara, I'll let her know right away!",
+                    timestamp = now - 3600000 * 1 + 60000,
+                    isOutgoing = true,
+                    detectionMethod = "SMS",
+                    appSource = "SMS"
                 )
             )
             repository.insertChatLogs(initialLogs)
+        }
+
+        val currentCalls = database.callLogDao().getAllCallLogs().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList()).value
+        if (currentCalls.isEmpty()) {
+            val now = System.currentTimeMillis()
+            val initialCalls = listOf(
+                CallLogItem(
+                    contactName = "Mom",
+                    phoneNumber = "+1 (555) 234-5678",
+                    callType = "Incoming",
+                    durationSeconds = 124,
+                    timestamp = now - 3600000 * 3
+                ),
+                CallLogItem(
+                    contactName = "Dad",
+                    phoneNumber = "+1 (555) 987-6543",
+                    callType = "Outgoing",
+                    durationSeconds = 45,
+                    timestamp = now - 3600000 * 6
+                ),
+                CallLogItem(
+                    contactName = "Unknown Number",
+                    phoneNumber = "+1 (555) 111-2222",
+                    callType = "Missed",
+                    durationSeconds = 0,
+                    timestamp = now - 3600000 * 12
+                )
+            )
+            repository.insertCallLogs(initialCalls)
         }
 
         val currentMedia = database.mediaItemDao().getAllMediaItems().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList()).value
@@ -387,7 +439,8 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
             
             // 1. SMART SCREEN DETECTION: Verify if child is inside an active chat window.
             // If they are on contact list or profile settings, standard text logs are ignored to protect privacy and prevent false contact captures.
-            if (currentScreen == "Contact List" || currentScreen == "Settings Profile") {
+            // Note: SMS bypasses smart screen detection because SMS runs in the background.
+            if (appSource != "SMS" && (currentScreen == "Contact List" || currentScreen == "Settings Profile")) {
                 Log.d("MonitorVM", "Smart Screen Detection: Suppressed log capture. Child is currently browsing contact list or profiles, not an active conversation.")
                 return@launch
             }
@@ -409,10 +462,26 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
                 messageText = messageText,
                 isOutgoing = isOutgoing,
                 timestamp = System.currentTimeMillis(),
-                detectionMethod = "ScreenReader",
+                detectionMethod = if (appSource == "SMS") "SMS" else "ScreenReader",
                 appSource = appSource
             )
             repository.insertChatLog(newLog)
+        }
+    }
+
+    /**
+     * Simulates a phone call being placed or received on the child's device.
+     */
+    fun simulatePhoneCall(contactName: String, phoneNumber: String, callType: String, durationSeconds: Int) {
+        viewModelScope.launch {
+            val newCall = CallLogItem(
+                contactName = contactName,
+                phoneNumber = phoneNumber,
+                callType = callType,
+                durationSeconds = durationSeconds,
+                timestamp = System.currentTimeMillis()
+            )
+            repository.insertCallLogs(listOf(newCall))
         }
     }
 
@@ -578,6 +647,7 @@ class MonitorViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             repository.clearAllChatLogs()
             repository.clearAllMediaItems()
+            repository.clearAllCallLogs()
             prepopulateInitialData()
         }
     }

@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.Flow
 class MonitorRepository(
     private val chatLogDao: ChatLogDao,
     private val mediaItemDao: MediaItemDao,
-    private val deviceStatusDao: DeviceStatusDao
+    private val deviceStatusDao: DeviceStatusDao,
+    private val callLogDao: CallLogDao
 ) {
     val allChatLogs: Flow<List<ChatLog>> = chatLogDao.getAllChatLogs()
     val allMediaItems: Flow<List<MediaItem>> = mediaItemDao.getAllMediaItems()
     val deviceStatusFlow: Flow<DeviceStatus?> = deviceStatusDao.getDeviceStatusFlow()
+    val allCallLogs: Flow<List<CallLogItem>> = callLogDao.getAllCallLogs()
 
     suspend fun insertChatLog(chatLog: ChatLog) = chatLogDao.insertChatLog(chatLog)
 
@@ -26,6 +28,10 @@ class MonitorRepository(
     suspend fun getMediaItemById(id: Int): MediaItem? = mediaItemDao.getMediaItemById(id)
 
     suspend fun clearAllMediaItems() = mediaItemDao.clearAllMediaItems()
+
+    suspend fun insertCallLogs(callLogs: List<CallLogItem>) = callLogDao.insertCallLogs(callLogs)
+
+    suspend fun clearAllCallLogs() = callLogDao.clearAllCallLogs()
 
     suspend fun getDeviceStatus(): DeviceStatus? = deviceStatusDao.getDeviceStatus()
 
